@@ -170,11 +170,15 @@ func MirrorList(parentWindow *gtk.Window) {
 	dialog.ShowAll()
 }
 
+var lineCounter int = 0
+
 func showLogDialog(parent *gtk.Dialog) {
 	if logDialog != nil {
 		logDialog.ShowAll()
 		return
 	}
+
+	lineCounter = 0
 
 	logDialog, _ = gtk.DialogNew()
 	logDialog.SetTitle("Update Progress")
@@ -237,6 +241,8 @@ func startMirrorListUpdate(command string) {
 
 	cmd.Start()
 
+	lineCounter = 0
+
 	go streamLogs(stdout)
 	go streamLogs(stderr)
 
@@ -269,6 +275,11 @@ func streamLogs(pipe io.ReadCloser) {
 }
 
 func processLogLine(logLine string) {
+	lineCounter++
+	if lineCounter <= 2 {
+		return
+	}
+
 	// Regular expression to match the log line format
 	re := regexp.MustCompile(`^\[.*?\]\s+(INFO|WARNING):\s+(.+)$`)
 	matches := re.FindStringSubmatch(logLine)
@@ -290,7 +301,7 @@ func processLogLine(logLine string) {
 				appendLog(content, "", "")
 			}
 		} else if logType == "WARNING" {
-			appendLog(content, "WARNING", "")
+			appendLog(content, "WARNING", "N/A")
 		}
 	}
 }

@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/gotk3/gotk3/gdk"
@@ -18,15 +15,17 @@ const (
 	windowWidth  = 500
 	windowHeight = 400
 	cssFilePath  = "styles.css"
-	logoFilePath = "assets/alg-logo-144.png"
+	logoFilePath = "/usr/share/pixmaps/welcome.png"
 	logoSize     = 60
 )
 
 var desktopEnv string
+var isLiveISO bool
 var win *gtk.Window
 
 func init() {
-	desktopEnv = getDesktopEnvironment()
+	desktopEnv = utils.GetDesktopEnvironment()
+	isLiveISO = utils.CheckIfLiveISO()
 }
 
 func main() {
@@ -152,19 +151,23 @@ func createButtonWithIcon(label, iconName string, fromFile bool) (*gtk.Button, e
 		}
 
 		if strings.Contains(label, "Tutorials") {
-			URL("https://arkalinuxgui.org/tutorials")
+			utils.URL("https://arkalinuxgui.org/tutorials")
 		}
 
 		if strings.Contains(label, "GitHub") {
-			URL("https://github.com/arch-linux-gui")
+			utils.URL("https://github.com/arch-linux-gui")
 		}
 
 		if strings.Contains(label, "Discord") {
-			URL("https://discord.gg/NgAFEw9Tkf")
+			utils.URL("https://discord.gg/NgAFEw9Tkf")
 		}
 
 		if strings.Contains(label, "Update Mirrorlist") {
 			utils.MirrorList(win)
+		}
+
+		if strings.Contains(label, "Install ALG") {
+			utils.RunCalamaresIfLiveISO(isLiveISO)
 		}
 	})
 	return button, nil
@@ -221,14 +224,31 @@ func addInstallSetupSection(vbox *gtk.Box) {
 	grid.SetRowSpacing(10)
 	grid.SetColumnHomogeneous(true)
 
-	buttons := []struct {
+	var buttons []struct {
 		label string
 		icon  string
-	}{
-		{"Tutorials", "help-contents"},
-		{"Screen Resolution", "video-display"},
-		{"Update System", "system-software-update"},
-		{"Update Mirrorlist", "view-refresh"},
+	}
+
+	if isLiveISO {
+		buttons = []struct {
+			label string
+			icon  string
+		}{
+			{"Install ALG", "system-software-install"},
+			{"Screen Resolution", "video-display"},
+			{"Update System", "system-software-update"},
+			{"Update Mirrorlist", "view-refresh"},
+		}
+	} else {
+		buttons = []struct {
+			label string
+			icon  string
+		}{
+			{"Tutorials", "help-contents"},
+			{"Screen Resolution", "video-display"},
+			{"Update System", "system-software-update"},
+			{"Update Mirrorlist", "view-refresh"},
+		}
 	}
 
 	for i, btn := range buttons {
@@ -304,16 +324,4 @@ func addAboutUsSection(vbox *gtk.Box) {
 		utils.AboutUs(win)
 	})
 	vbox.Add(button)
-}
-
-func getDesktopEnvironment() string {
-	return strings.ToLower(os.Getenv("XDG_CURRENT_DESKTOP"))
-}
-
-func URL(url string) {
-	cmd := exec.Command("xdg-open", url)
-	err := cmd.Run()
-	if err != nil {
-		fmt.Println("URL Error: " + err.Error())
-	}
 }

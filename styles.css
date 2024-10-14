@@ -29,3 +29,15 @@ button:focus {
 switch:checked {
   background-color: #6b22cc;
 } */
+
+:root {
+  --svg-color: #000;
+}
+
+.dark-mode {
+  --svg-color: #fff;
+}
+
+svg {
+  color: var(--svg-color);
+}
